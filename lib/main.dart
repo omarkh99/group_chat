@@ -57,6 +57,24 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
+              Text(
+                "Welcome To Our",
+                style: TextStyle(
+                  fontSize: 40,
+                ),
+              ),
+              Container(
+                height: 20,
+              ),
+              Text(
+                " Group Chat Application",
+                style: TextStyle(
+                  fontSize: 30,
+                ),
+              ),
+              Container(
+                height: 120,
+              ),
               Text("Enter your name"),
               TextField(
                 textAlign: TextAlign.center,

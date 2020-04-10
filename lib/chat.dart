@@ -1,10 +1,12 @@
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:back_button_interceptor/back_button_interceptor.dart';
+import 'package:image_picker/image_picker.dart';
 
 final ThemeData iOSTheme = new ThemeData(
   primarySwatch: Colors.red,
@@ -124,6 +126,13 @@ class ChatWindow extends State<Chat> with TickerProviderStateMixin {
                 ),
               ),
               new Container(
+                margin: new EdgeInsets.symmetric(horizontal: 3.0),
+                child: new IconButton(
+                    icon: new Icon(Icons.add_a_photo),
+                    onPressed: _submitImg,
+                ),
+              ),
+              new Container(
                   margin: new EdgeInsets.symmetric(horizontal: 3.0),
                   child: Theme.of(context).platform == TargetPlatform.iOS
                       ? new CupertinoButton(
@@ -150,15 +159,42 @@ class ChatWindow extends State<Chat> with TickerProviderStateMixin {
   }
 
   void datahandler(data){
+    print(data);
     String serr = new String.fromCharCodes(data).trim();
     var splited = serr.split("-");
-    print(serr);
+    List<int> bytes = utf8.encode(splited[1]);
+    print(bytes);
     Msg msg = new Msg(
       name: splited[0],
       txt: splited[1],
       animationController: new AnimationController(
         vsync: this,
         duration: new Duration(milliseconds: 800),
+      ),
+    );
+    setState(() {
+      _messages.insert(0, msg);
+    });
+    msg.animationController.forward();
+  }
+
+  void _submitImg() async{
+    File _image;
+    var image = await ImagePicker.pickImage(
+        source: ImageSource.camera,
+        maxHeight: 50,
+        maxWidth: 50,
+    );
+    setState(() {
+      _image = image;
+    });
+
+    Msg msg = new Msg(
+      name: name,
+      image: _image,
+      animationController: new AnimationController(
+          vsync: this,
+          duration: new Duration(milliseconds: 800)
       ),
     );
     setState(() {
@@ -191,9 +227,10 @@ class ChatWindow extends State<Chat> with TickerProviderStateMixin {
 }
 
 class Msg extends StatelessWidget {
-  Msg({this.txt, this.animationController,this.name});
+  Msg({this.txt, this.animationController,this.name,this.image});
   final String name;
   final String txt;
+  final File image;
   final AnimationController animationController;
 
   @override
@@ -218,7 +255,7 @@ class Msg extends StatelessWidget {
                   new Text(name, style: Theme.of(ctx).textTheme.subhead),
                   new Container(
                     margin: const EdgeInsets.only(top: 6.0),
-                    child: new Text(txt),
+                    child: (image == null)?new Text(txt):Image.file(image),
                   ),
                 ],
               ),
