@@ -159,36 +159,55 @@ class ChatWindow extends State<Chat> with TickerProviderStateMixin {
   }
 
   void datahandler(data){
-    print(data);
-    String serr = new String.fromCharCodes(data).trim();
-    var splited = serr.split("-");
-    List<int> bytes = utf8.encode(splited[1]);
-    print(bytes);
-    Msg msg = new Msg(
-      name: splited[0],
-      txt: splited[1],
-      animationController: new AnimationController(
-        vsync: this,
-        duration: new Duration(milliseconds: 800),
-      ),
-    );
-    setState(() {
-      _messages.insert(0, msg);
-    });
-    msg.animationController.forward();
+    var serr = new String.fromCharCodes(data).trim();
+    print(serr);
+    var splited = serr.split(">");
+    if(splited[1].startsWith("/9j/")){
+      List<int> bytes = base64Decode(splited[1]);
+      var image = MemoryImage(bytes);
+      Msg msg = new Msg(
+        name: splited[0],
+        img: image,
+        animationController: new AnimationController(
+          vsync: this,
+          duration: new Duration(milliseconds: 800),
+        ),
+      );
+      setState(() {
+        _messages.insert(0, msg);
+      });
+      msg.animationController.forward();
+    }else {
+      List<int> bytes = base64Decode(splited[1]);
+      String s = utf8.decode(bytes);
+      print(bytes);
+      Msg msg = new Msg(
+        name: splited[0],
+        txt: s,
+        animationController: new AnimationController(
+          vsync: this,
+          duration: new Duration(milliseconds: 800),
+        ),
+      );
+      setState(() {
+        _messages.insert(0, msg);
+      });
+      msg.animationController.forward();
+    }
   }
 
   void _submitImg() async{
     File _image;
     var image = await ImagePicker.pickImage(
-        source: ImageSource.camera,
-        maxHeight: 50,
-        maxWidth: 50,
+        source: ImageSource.gallery,
     );
     setState(() {
       _image = image;
     });
 
+    List<int> bytes = image.readAsBytesSync();
+    String s = base64Encode(bytes);
+    widget.channel.writeln(s);
     Msg msg = new Msg(
       name: name,
       image: _image,
@@ -204,7 +223,9 @@ class ChatWindow extends State<Chat> with TickerProviderStateMixin {
   }
 
   void _submitMsg(String txt) {
-    widget.channel.writeln(txt);
+    List<int> byte = utf8.encode(txt);
+    String s = base64Encode(byte);
+    widget.channel.writeln(s);
     _textController.clear();
     setState(() {
       _isWriting = false;
@@ -227,42 +248,114 @@ class ChatWindow extends State<Chat> with TickerProviderStateMixin {
 }
 
 class Msg extends StatelessWidget {
-  Msg({this.txt, this.animationController,this.name,this.image});
+  Msg({this.txt, this.animationController,this.name,this.image,this.img});
   final String name;
   final String txt;
   final File image;
+  final MemoryImage img;
   final AnimationController animationController;
 
   @override
   Widget build(BuildContext ctx) {
-    return new SizeTransition(
-      sizeFactor: new CurvedAnimation(
-          parent: animationController, curve: Curves.easeOut),
-      axisAlignment: 0.0,
-      child: new Container(
-        margin: const EdgeInsets.symmetric(vertical: 8.0),
-        child: new Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            new Container(
-              margin: const EdgeInsets.only(right: 18.0),
-              child: new CircleAvatar(child: new Text(name[0])),
-            ),
-            new Expanded(
-              child: new Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  new Text(name, style: Theme.of(ctx).textTheme.subhead),
-                  new Container(
-                    margin: const EdgeInsets.only(top: 6.0),
-                    child: (image == null)?new Text(txt):Image.file(image),
-                  ),
-                ],
+    if(image == null && img == null) {
+      return new SizeTransition(
+        sizeFactor: new CurvedAnimation(
+            parent: animationController, curve: Curves.easeOut),
+        axisAlignment: 0.0,
+        child: new Container(
+          margin: const EdgeInsets.symmetric(vertical: 8.0),
+          child: new Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              new Container(
+                margin: const EdgeInsets.only(right: 18.0),
+                child: new CircleAvatar(child: new Text(name[0])),
               ),
-            ),
-          ],
+              new Expanded(
+                child: new Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    new Text(name, style: Theme
+                        .of(ctx)
+                        .textTheme
+                        .subhead),
+                    new Container(
+                      margin: const EdgeInsets.only(top: 6.0),
+                      child: new Text(txt)
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    }else if (txt == null && img == null){
+      return new SizeTransition(
+        sizeFactor: new CurvedAnimation(
+            parent: animationController, curve: Curves.easeOut),
+        axisAlignment: 0.0,
+        child: new Container(
+          margin: const EdgeInsets.symmetric(vertical: 8.0),
+          child: new Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              new Container(
+                margin: const EdgeInsets.only(right: 18.0),
+                child: new CircleAvatar(child: new Text(name[0])),
+              ),
+              new Expanded(
+                child: new Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    new Text(name, style: Theme
+                        .of(ctx)
+                        .textTheme
+                        .subhead),
+                    new Container(
+                        margin: const EdgeInsets.only(top: 6.0),
+                        child: new Image.file(image)
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }else{
+      return new SizeTransition(
+        sizeFactor: new CurvedAnimation(
+            parent: animationController, curve: Curves.easeOut),
+        axisAlignment: 0.0,
+        child: new Container(
+          margin: const EdgeInsets.symmetric(vertical: 8.0),
+          child: new Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              new Container(
+                margin: const EdgeInsets.only(right: 18.0),
+                child: new CircleAvatar(child: new Text(name[0])),
+              ),
+              new Expanded(
+                child: new Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    new Text(name, style: Theme
+                        .of(ctx)
+                        .textTheme
+                        .subhead),
+                    new Container(
+                        margin: const EdgeInsets.only(top: 6.0),
+                        child: new Image(image: img)
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
   }
 }
