@@ -180,7 +180,6 @@ class ChatWindow extends State<Chat> with TickerProviderStateMixin {
     }else {
       List<int> bytes = base64Decode(splited[1]);
       String s = utf8.decode(bytes);
-      print(bytes);
       Msg msg = new Msg(
         name: splited[0],
         txt: s,

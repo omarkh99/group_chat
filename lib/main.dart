@@ -7,7 +7,7 @@ import 'package:groupchat/chat.dart';
 void main() async {
   // modify with your true address/port
   // ignore: close_sinks
-  Socket socket = await Socket.connect('178.153.25.7', 5353);
+  Socket socket = await Socket.connect('37.211.48.157', 5353);
   runApp(MyApp(socket));
 }
 
